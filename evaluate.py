@@ -59,9 +59,9 @@ with open(output_folder + 'performances.txt', 'w') as file_perf:
     file_perf.write(str(cm))
 
 # Save sample results
-fig, ax = plt.subplots(10, 2, figsize=[15, 30])
+fig, ax = plt.subplots(16, 2, figsize=[15, 48])
 
-for idx in range(min(10, len(val_data))):
+for idx in range(min(16, len(val_data))):
     ax[idx, 0].imshow(val_data[idx])
     ax[idx, 0].set_title(f"True: {label_classes[y_true[idx]]}")
     ax[idx, 1].imshow(val_data[idx])
