@@ -1,0 +1,12 @@
+__pycache__
+dataset_brain_tumor_mri
+checkpoint
+checkpoint
+logs
+data
+output
+predictions
+*.npy
+env
+*.h5
+directory.txt
