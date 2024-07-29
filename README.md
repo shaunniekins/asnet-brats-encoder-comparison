@@ -10,8 +10,8 @@ Download the dataset from [this link](https://www.kaggle.com/datasets/masoudnick
 
 1. Prepare the dataset:
 
-   - Create a `dataset_brain_tumor_mri` directory.
-   - Inside `dataset_brain_tumor_mri`, create the following subdirectories and add data from the downloaded dataset:
+   - Create a `brain_tumor_mri` directory.
+   - Inside `brain_tumor_mri`, create the following subdirectories and add data from the downloaded dataset:
      - Training
      - Testing
 
@@ -38,9 +38,9 @@ Download the dataset from [this link](https://www.kaggle.com/datasets/masoudnick
 5. Train the model (based on chosen encoder):
 
    ```
-   python train.py --encoder vgg16
-   python train.py --encoder mobilenetv3
-   python train.py --encoder efficientnetv2
+   python3 train.py --encoder vgg16
+   python3 train.py --encoder mobilenetv3
+   python3 train.py --encoder efficientnetv2
    ```
 
 6. Evaluate the model (based on chosen encoder):

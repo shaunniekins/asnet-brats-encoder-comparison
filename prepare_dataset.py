@@ -14,7 +14,7 @@ width = 256
 channels = 3
 
 # Directory paths
-dataset_dir = 'dataset_brain_tumor_mri/'
+dataset_dir = 'brain_tumor_mri/'
 train_dir = os.path.join(dataset_dir, 'Training')
 
 
@@ -67,17 +67,9 @@ def load_data_in_batches(df):
 if __name__ == "__main__":
     # Generate paths
     train_df = generate_data_paths(train_dir)
-    
-    # Print original labels
-    print("Original Labels:")
-    print(train_df['labels'].unique())
 
     # Encode labels
     train_df, label_encoder = encode_labels(train_df)
-    
-    # Print encoded labels
-    print("Encoded Labels:")
-    print(train_df['label_encoded'].unique())
 
     # Split data into train and validation
     train_df, val_df = train_test_split(
