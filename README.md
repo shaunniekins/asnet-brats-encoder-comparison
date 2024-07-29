@@ -26,7 +26,7 @@ Download the dataset from [this link](https://www.kaggle.com/datasets/masoudnick
 3. Create directories for checkpoints:
 
    ```
-   mkdir data checkpoint output
+   mkdir data checkpoint output training_data
    ```
 
 4. Prepare the dataset:

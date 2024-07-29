@@ -10,3 +10,5 @@ predictions
 env
 *.h5
 directory.txt
+prompt.txt
+training_data

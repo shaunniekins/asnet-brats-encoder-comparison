@@ -5,6 +5,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
 from model import AS_Net
+from config import chosen_encoder
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -19,8 +20,8 @@ val_data = tf.image.adjust_gamma(val_data / 255., gamma=1.6)
 
 print('Brain Tumor MRI Dataset loaded')
 
-model = AS_Net()
-model.load_weights('./checkpoint/weights.weights.h5')
+model = AS_Net(encoder=chosen_encoder)
+model.load_weights = f'./checkpoint/{chosen_encoder}_weights.weights.h5'
 predictions = model.predict(val_data, batch_size=1, verbose=1)
 
 y_pred = np.argmax(predictions, axis=-1)
@@ -49,10 +50,10 @@ plt.yticks(tick_marks, label_classes)
 plt.tight_layout()
 plt.ylabel('True label')
 plt.xlabel('Predicted label')
-plt.savefig(output_folder + "confusion_matrix.png")
+plt.savefig(output_folder + f'{chosen_encoder}_confusion_matrix.png')
 
 # Save the results
-with open(output_folder + 'performances.txt', 'w') as file_perf:
+with open(output_folder + f'{chosen_encoder}_performances.txt', 'w') as file_perf:
     file_perf.write("Classification Report:\n")
     file_perf.write(classification_report(y_true, y_pred, target_names=label_classes))
     file_perf.write("\nConfusion Matrix:\n")
@@ -68,6 +69,6 @@ for idx in range(min(16, len(val_data))):
     ax[idx, 1].set_title(f"Predicted: {label_classes[y_pred[idx]]}")
 
 plt.tight_layout()
-plt.savefig(output_folder + 'sample_results.png')
+plt.savefig(output_folder + f'{chosen_encoder}_sample_results.png')
 
 print("Evaluation completed. Results saved in the 'output' folder.")

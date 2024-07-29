@@ -10,6 +10,7 @@ from tensorflow.image import resize
 import numpy as np
 import os
 import datetime
+from config import chosen_encoder
 
 start_time = datetime.datetime.now()
 
@@ -64,8 +65,9 @@ def generator(images, labels, batch_size):
 
 
 # Build model
-model = AS_Net()
-weights_path = './checkpoint/weights.weights.h5'
+model = AS_Net(encoder=chosen_encoder)
+weights_path = f'./checkpoint/{chosen_encoder}_weights.weights.h5'
+
 if os.path.exists(weights_path):
     model.load_weights(weights_path)
     print(f"Loaded weights from {weights_path}.")
@@ -78,8 +80,8 @@ model.compile(optimizer=optimizer, loss=WBEC(), metrics=['accuracy'])
 
 # Callbacks
 callbacks = [
-    ModelCheckpoint('./checkpoint/weights.weights.h5',
-                    save_best_only=True, monitor='val_loss', mode='min', save_weights_only=True, ),
+    ModelCheckpoint(weights_path, save_best_only=True,
+                    monitor='val_loss', mode='min', save_weights_only=True, ),
     EarlyStopping(patience=10, restore_best_weights=True),
     ReduceLROnPlateau(factor=0.1, patience=5, min_lr=1e-6),
     TensorBoard(log_dir='./logs')
@@ -95,10 +97,22 @@ history = model.fit(
 )
 
 # Save final model
-model.save('final_model.h5')
+final_model_path = f'training_data/{chosen_encoder}_final_model.h5'
+model.save(final_model_path)
+print(f"Saved final model at {final_model_path}")
+end_time = datetime.datetime.now()
+
+# Calculate duration
+duration = end_time - start_time
+minutes = divmod(duration.total_seconds(), 60)[0]
+
+# Save training start and end time
+training_time_filename = f'training_data/{chosen_encoder}_training_time.txt'
+with open(training_time_filename, 'w') as f:
+    f.write(f"Start time: {start_time}\n")
+    f.write(f"End time: {end_time}\n")
+    f.write(f"Duration: {minutes} minutes\n")
+
+print(f"Training start and end times saved to {training_time_filename}")
 
 print("Training completed.")
-
-end_time = datetime.datetime.now()
-print(f"Start time: {start_time}")
-print(f"Process ended at: {end_time}")
