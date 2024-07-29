@@ -35,14 +35,18 @@ Download the dataset from [this link](https://www.kaggle.com/datasets/masoudnick
    python3 prepare_dataset.py
    ```
 
-5. Train the model:
+5. Train the model (based on chosen encoder):
 
    ```
-   python3 train.py
+   python train.py --encoder vgg16
+   python train.py --encoder mobilenetv3
+   python train.py --encoder efficientnetv2
    ```
 
-6. Evaluate the model:
+6. Evaluate the model (based on chosen encoder):
 
    ```
-   python3 evaluate.py
+   python3 evaluate.py --encoder vgg16
+   python3 evaluate.py --encoder mobilenetv3
+   python3 evaluate.py --encoder efficientnetv2
    ```
