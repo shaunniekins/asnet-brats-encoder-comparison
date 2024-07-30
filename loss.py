@@ -1,10 +1,8 @@
 # loss.py
 
-from tensorflow import nn
 import tensorflow as tf
 from keras import backend as K
-from tensorflow.keras.backend import binary_crossentropy
-from keras.losses import Loss, binary_crossentropy
+from keras.losses import Loss
 
 
 class WBEC(Loss):

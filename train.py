@@ -30,9 +30,11 @@ val_data = np.load('data/data_val.npy')
 val_labels = np.load('data/label_val.npy')
 print("Data loaded")
 
-# Normalize data
-train_data = (train_data - train_data.mean()) / train_data.std()
-val_data = (val_data - val_data.mean()) / val_data.std()
+# Normalize data per image
+train_data = (train_data - np.mean(train_data, axis=(1, 2, 3),
+              keepdims=True)) / np.std(train_data, axis=(1, 2, 3), keepdims=True)
+val_data = (val_data - np.mean(val_data, axis=(1, 2, 3), keepdims=True)
+            ) / np.std(val_data, axis=(1, 2, 3), keepdims=True)
 
 # Convert labels to one-hot encoding
 train_labels = to_categorical(train_labels, 4)
