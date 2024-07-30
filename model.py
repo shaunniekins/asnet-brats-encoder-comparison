@@ -16,7 +16,7 @@ def AS_Net(encoder='vgg16', input_size=(192, 256, 3)):
         layer_indices = [2, 5, 9, 13, 17] 
     elif encoder == 'mobilenetv3':
         ENCODER = MobileNetV3Large(weights='imagenet', include_top=False, input_shape=input_size)
-        layer_indices = [2, 5, 9, 13, 17] 
+        layer_indices = [0, 3, 6, 10, 15]
     elif encoder == 'efficientnetv2':
         ENCODER = EfficientNetV2L(weights='imagenet', include_top=False, input_shape=input_size)
         layer_indices = [2, 6, 12, 19, 32] 
@@ -44,6 +44,7 @@ def AS_Net(encoder='vgg16', input_size=(192, 256, 3)):
     # Adjust and merge feature maps
     merged = outputs[-1]
     for i in range(len(outputs) - 2, -1, -1):
+        print(f"Layer {i} output shape: {outputs[i].shape}")
         adjusted = adjust_feature_map(outputs[i], merged.shape)
         merged = concatenate([merged, adjusted], axis=-1)
 
