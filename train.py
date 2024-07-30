@@ -39,8 +39,8 @@ train_labels = to_categorical(train_labels, 4)
 val_labels = to_categorical(val_labels, 4)
 
 # Training parameters
-batch_size = 1  # 32 or 16
-epochs = 1  # 100
+batch_size = 32
+epochs = 100
 steps_per_epoch = len(train_data) // batch_size
 
 # Data augmentation
