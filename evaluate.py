@@ -16,8 +16,14 @@ val_data = np.load('data/data_val.npy').astype(np.float32)
 val_labels = np.load('data/label_val.npy').astype(np.int32)
 label_classes = np.load('data/label_classes.npy', allow_pickle=True)
 
+# Calculate mean and standard deviation from training data
+# Note: Ideally, you should load mean and std from training data saved in `train.py`
+train_data = np.load('data/data_train.npy').astype(np.float32)
+mean = np.mean(train_data, axis=(1, 2, 3), keepdims=True)
+std = np.std(train_data, axis=(1, 2, 3), keepdims=True)
+
 # Normalize validation data
-val_data = tf.image.adjust_gamma(val_data / 255., gamma=1.6)
+val_data = (val_data - mean) / std
 
 print('Brain Tumor MRI Dataset loaded')
 
