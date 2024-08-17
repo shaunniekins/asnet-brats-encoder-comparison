@@ -2,10 +2,10 @@
 
 import tensorflow as tf
 from model import AS_Net
-from loss import WBEC
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, TensorBoard
 from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.image import resize
 import numpy as np
 import os
@@ -77,8 +77,9 @@ else:
     print(f"No weights found at {weights_path}, initializing from scratch.")
 
 # Compile model
-optimizer = Adam(learning_rate=1e-3, clipnorm=1.0)
-model.compile(optimizer=optimizer, loss=WBEC(), metrics=['accuracy'])
+optimizer = Adam(learning_rate=1e-5)
+model.compile(optimizer=optimizer,
+              loss=CategoricalCrossentropy(), metrics=['accuracy'])
 
 # Callbacks
 callbacks = [
