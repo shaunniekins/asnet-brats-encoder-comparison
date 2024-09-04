@@ -1,12 +1,12 @@
 # model.py
 
 from tensorflow.keras import Model, Input
+from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPooling2D, UpSampling2D, concatenate, Multiply, GlobalAveragePooling2D, GlobalMaxPooling2D, Dense, Reshape, Layer
 from tensorflow.keras.applications import VGG16, EfficientNetV2L, MobileNetV3Large
-from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPooling2D, UpSampling2D, concatenate, Multiply, GlobalAveragePooling2D, GlobalMaxPooling2D, Dense, Reshape
-from tensorflow.keras import backend as K
+import tensorflow as tf
 
 
-def AS_Net(encoder='vgg16', input_size=(192, 256, 3)):
+def AS_Net(encoder='mobilenetv3', input_size=(299, 299, 3)):
     inputs = Input(input_size)
     print(f'CURRENT ENCODER: {encoder}')
 
@@ -31,24 +31,9 @@ def AS_Net(encoder='vgg16', input_size=(192, 256, 3)):
     outputs = [Model(inputs=ENCODER.inputs, outputs=layer)(inputs)
                for layer in output_layers]
 
-    # Print shapes for debugging
-    # for i, output in enumerate(outputs):
-    #     print(f"Output {i+1} shape:", output.shape)
-
-    # Helper function to adjust feature map sizes
-    def adjust_feature_map(x, target_shape):
-        _, h, w, _ = target_shape
-        current_h, current_w = x.shape[1:3]
-        if current_h > h or current_w > w:
-            return MaxPooling2D(pool_size=(current_h // h, current_w // w))(x)
-        elif current_h < h or current_w < w:
-            return UpSampling2D(size=(h // current_h, w // current_w))(x)
-        return x
-
     # Adjust and merge feature maps
     merged = outputs[-1]
     for i in range(len(outputs) - 2, -1, -1):
-        # print(f"Layer {i} output shape: {outputs[i].shape}")
         adjusted = adjust_feature_map(outputs[i], merged.shape)
         merged = concatenate([merged, adjusted], axis=-1)
 
@@ -130,21 +115,20 @@ class CAM(Model):
         return y
 
 
-class Synergy(Model):
-    def __init__(self, alpha=0.5, beta=0.5):
-        super(Synergy, self).__init__()
-        self.alpha = alpha
-        self.beta = beta
-        self.conv = Conv2D(1, 3, padding='same',
-                           kernel_initializer='he_normal')
-        self.bn = BatchNormalization()
+class ResizeLayer(Layer):
+    def __init__(self, target_height, target_width, **kwargs):
+        super(ResizeLayer, self).__init__(**kwargs)
+        self.target_height = target_height
+        self.target_width = target_width
 
     def call(self, inputs):
-        x, y = inputs
-        inputs = self.alpha * x + self.beta * y
-        y = self.bn(self.conv(inputs))
-        return y
+        return tf.image.resize(inputs, (self.target_height, self.target_width))
 
 
-if __name__ == '__main__':
-    print(K.epsilon())
+def adjust_feature_map(x, target_shape):
+    _, h, w, _ = target_shape
+    current_h, current_w = x.shape[1:3]
+    if current_h != h or current_w != w:
+        resize_layer = ResizeLayer(h, w)
+        return resize_layer(x)
+    return x
