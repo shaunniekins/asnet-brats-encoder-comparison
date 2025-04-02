@@ -1,0 +1,29 @@
+VGG16 AS-Net Training Completed at: 2025-03-31 11:16:08
+
+Training Configuration:
+- Model: AS-Net with VGG16 encoder
+- Image dimensions: 192x192
+- Input Channels: 3
+- Batch size (per replica): 4
+- Global Batch size: 4
+- Epochs planned: 30
+- Initial Learning rate: 0.0001
+- Mixed Precision Policy: float32
+- Loss Config: {'bce_weight': 0.5, 'dice_weight': 0.5, 'class_weight': 100.0}
+- Total Duration: 12h 24m 15s
+
+Checkpoint and output locations:
+- Checkpoint directory: ./vgg16-checkpoints
+- Best model weights: ./vgg16-checkpoints/vgg16_as_net_model_best.weights.h5
+- Output directory: vgg16-output
+
+--- Final Performance Metrics ---
+Evaluation Metrics:
+-------------------
+Loss: 0.1380
+Binary Accuracy: 0.9982
+Dice Coefficient: 0.9270
+IoU (Jaccard): 0.8640
+Precision (Threshold=0.5): 0.8762
+Recall/Sensitivity (Threshold=0.5): 0.9841
+F1-Score (Threshold=0.5): 0.9270

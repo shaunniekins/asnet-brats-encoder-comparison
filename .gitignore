@@ -1,10 +1,11 @@
 *.h5
 *.npy
+*.zip
+.DS_Store
 __pycache__
 brain_tumor_mri
 checkpoint
 data
 env
 logs
-output
-training_data
+brats-implementation

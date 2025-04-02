@@ -1,0 +1,9 @@
+Evaluation Metrics:
+-------------------
+Loss: 0.1380
+Binary Accuracy: 0.9982
+Dice Coefficient: 0.9270
+IoU (Jaccard): 0.8640
+Precision (Threshold=0.5): 0.8762
+Recall/Sensitivity (Threshold=0.5): 0.9841
+F1-Score (Threshold=0.5): 0.9270

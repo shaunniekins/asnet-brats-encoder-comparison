@@ -1,0 +1,29 @@
+AS-Net (mobilenetv3small) Training Completed at: 2025-04-01 10:02:20
+
+Training Configuration:
+- Model: AS-Net with MobileNetV3-Small encoder
+- Image dimensions: 224x224
+- Input Channels: 3
+- Batch size (per replica): 4
+- Global Batch size: 4
+- Epochs planned: 30
+- Initial Learning rate: 0.0001
+- Mixed Precision Policy: float32
+- Loss Config: {'bce_weight': 0.5, 'dice_weight': 0.5, 'class_weight': 100.0}
+- Total Duration: 9h 2m 11s
+
+Checkpoint and output locations:
+- Checkpoint directory: ./mobilenetv3small-checkpoints
+- Best model weights: ./mobilenetv3small-checkpoints/mobilenetv3small_as_net_model_best.weights.h5
+- Output directory: mobilenetv3small-output
+
+--- Final Performance Metrics ---
+Evaluation Metrics (mobilenetv3small):
+------------------------------------
+- Binary Accuracy: 0.9980
+- Dice Coef: 0.9185
+- Iou: 0.8492
+- Loss: 0.1403
+- Precision: 0.8604
+- Recall: 0.9850
+- F1 Score: 0.9185

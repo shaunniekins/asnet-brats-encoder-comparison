@@ -1,0 +1,9 @@
+Evaluation Metrics (mobilenetv3large):
+------------------------------------
+- Binary Accuracy: 0.9980
+- Dice Coef: 0.9187
+- Iou: 0.8496
+- Loss: 0.1712
+- Precision: 0.8704
+- Recall: 0.9727
+- F1 Score: 0.9187
