@@ -1,0 +1,26 @@
+# Core libraries
+numpy
+tensorflow>=2.10.0
+keras>=2.10.0
+matplotlib
+pandas
+h5py
+scikit-learn
+scikit-image
+opencv-python
+graphviz
+pydot
+jupyterlab
+jupytext
+
+# Optional GPU support
+nvidia-cudnn-cu12>=8.9.4.25
+
+# numpy 
+# keras 
+# matplotlib 
+# scikit-learn 
+# pandas 
+# tensorflow[and-cuda] 
+# nvidia-cudnn-cu12 
+# h5py
