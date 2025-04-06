@@ -10,3 +10,7 @@ env
 logs
 brats-implementation
 brats2020-training-data
+brats2024_training_data_additional
+brats2024-predictions
+brats2024-validation-data
+BraTS-PTG supplementary demographic information and metadata

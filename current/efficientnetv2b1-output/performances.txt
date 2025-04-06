@@ -1,0 +1,9 @@
+Evaluation Metrics (EfficientNetV2B1):
+------------------------------------
+- Loss: 0.1541
+- Binary Accuracy: 0.9983
+- Dice Coef: 0.9237
+- Iou: 0.8583
+- Precision: 0.8675
+- Recall: 0.9877
+- F1 Score: 0.9237

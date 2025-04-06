@@ -1,0 +1,9 @@
+Evaluation Metrics (VGG16):
+------------------------------------
+- Loss: 0.1518
+- Binary Accuracy: 0.9984
+- Dice Coef: 0.9249
+- Iou: 0.8603
+- Precision: 0.8669
+- Recall: 0.9912
+- F1 Score: 0.9249

@@ -1,0 +1,29 @@
+AS-Net (EfficientNetV2B1) Training Completed at: 2025-04-05 07:26:57
+
+Training Configuration:
+- Model Variant: EfficientNetV2B1
+- Image dimensions: 240x240
+- Input Channels: 3
+- Batch size (per replica): 4
+- Global Batch size: 4
+- Epochs planned: 30
+- Initial Learning rate: 0.0001
+- Mixed Precision Policy: float32
+- Loss Config: {'bce_weight': 0.5, 'dice_weight': 0.5, 'class_weight': 100.0}
+- Total Duration: 1h 44m 23s
+
+Checkpoint and output locations:
+- Checkpoint directory: ./efficientnetv2b1-checkpoints
+- Best model weights: ./efficientnetv2b1-checkpoints/efficientnetv2b1_as_net_model_best.weights.h5
+- Output directory: efficientnetv2b1-output
+
+--- Final Performance Metrics ---
+Evaluation Metrics (EfficientNetV2B1):
+------------------------------------
+- Loss: 0.1541
+- Binary Accuracy: 0.9983
+- Dice Coef: 0.9237
+- Iou: 0.8583
+- Precision: 0.8675
+- Recall: 0.9877
+- F1 Score: 0.9237
