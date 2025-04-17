@@ -1,0 +1,9 @@
+Test Set Evaluation Metrics (MobileNetV3Large_BraTS23):
+------------------------------------
+- Loss: 0.2356
+- Binary Accuracy: 0.9971
+- Dice Coef: 0.8738
+- Iou: 0.7759
+- Precision: 0.8186
+- Recall: 0.9371
+- F1 Score: 0.8738

@@ -1,0 +1,9 @@
+Test Set Evaluation Metrics (EfficientNetV2B1_BraTS23):
+------------------------------------
+- Loss: 0.1785
+- Binary Accuracy: 0.9973
+- Dice Coef: 0.8815
+- Iou: 0.7881
+- Precision: 0.8185
+- Recall: 0.9550
+- F1 Score: 0.8815

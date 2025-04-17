@@ -1,0 +1,9 @@
+Test Set Evaluation Metrics (VGG16_BraTS23):
+------------------------------------
+- Loss: 0.1967
+- Binary Accuracy: 0.9974
+- Dice Coef: 0.8873
+- Iou: 0.7974
+- Precision: 0.8334
+- Recall: 0.9487
+- F1 Score: 0.8873

@@ -1,0 +1,17 @@
+numpy
+tensorflow[and-cuda]
+keras
+matplotlib
+pandas
+h5py
+scikit-learn
+scikit-image
+opencv-python
+graphviz
+pydot
+nibabel 
+jupyterlab<4.4,>=4.3.6
+jupytext
+tqdm
+
+nvidia-cudnn-cu12

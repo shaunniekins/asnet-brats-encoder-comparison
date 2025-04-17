@@ -1,0 +1,32 @@
+AS-Net (VGG16_BraTS23) Training & Testing Completed at: 2025-04-16 05:48:55
+
+Data Configuration (BraTS 2023 Preprocessed H5):
+- H5 Slice Directory: ./preprocessed_brats23_h5_slices
+
+Training Configuration:
+- Model Variant: VGG16_BraTS23
+- Image dimensions (target): 224x224
+- Input Channels (from H5): 3
+- Batch size (per replica): 32
+- Global Batch size: 32
+- Epochs planned: 30
+- Initial Learning rate: 0.0001
+- Mixed Precision Policy: float32
+- Loss Config: {'bce_weight': 0.5, 'dice_weight': 0.5, 'class_weight': 100.0}
+- Total Duration: 23h 39m 23s
+
+Checkpoint and output locations:
+- Checkpoint directory: ./VGG16_BraTS23-checkpoints
+- Best model weights (val): ./VGG16_BraTS23-checkpoints/VGG16_BraTS23_as_net_model_best.weights.h5
+- Output directory: VGG16_BraTS23-output
+
+--- Final Performance Metrics (Test Set) ---
+Test Set Evaluation Metrics (VGG16_BraTS23):
+------------------------------------
+- Loss: 0.1967
+- Binary Accuracy: 0.9974
+- Dice Coef: 0.8873
+- Iou: 0.7974
+- Precision: 0.8334
+- Recall: 0.9487
+- F1 Score: 0.8873

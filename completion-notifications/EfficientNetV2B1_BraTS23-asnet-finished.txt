@@ -1,0 +1,32 @@
+AS-Net (EfficientNetV2B1_BraTS23) Training & Testing Completed at: 2025-04-13 16:06:06
+
+Data Configuration (BraTS 2023 Preprocessed H5):
+- H5 Slice Directory: ./preprocessed_brats23_h5_slices
+
+Training Configuration:
+- Model Variant: EfficientNetV2B1_BraTS23
+- Image dimensions (target): 240x240
+- Input Channels (from H5): 3
+- Batch size (per replica): 32
+- Global Batch size: 32
+- Epochs planned: 30
+- Initial Learning rate: 0.0001
+- Mixed Precision Policy: float32
+- Loss Config: {'bce_weight': 0.5, 'dice_weight': 0.5, 'class_weight': 100.0}
+- Total Duration: 19h 22m 34s
+
+Checkpoint and output locations:
+- Checkpoint directory: ./EfficientNetV2B1_BraTS23-checkpoints
+- Best model weights (val): ./EfficientNetV2B1_BraTS23-checkpoints/EfficientNetV2B1_BraTS23_as_net_model_best.weights.h5
+- Output directory: EfficientNetV2B1_BraTS23-output
+
+--- Final Performance Metrics (Test Set) ---
+Test Set Evaluation Metrics (EfficientNetV2B1_BraTS23):
+------------------------------------
+- Loss: 0.1785
+- Binary Accuracy: 0.9973
+- Dice Coef: 0.8815
+- Iou: 0.7881
+- Precision: 0.8185
+- Recall: 0.9550
+- F1 Score: 0.8815

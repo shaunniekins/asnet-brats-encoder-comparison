@@ -1,9 +1,0 @@
-Evaluation Metrics (MobileNetV3Small):
-------------------------------------
-- Loss: 0.2070
-- Binary Accuracy: 0.9977
-- Dice Coef: 0.8967
-- Iou: 0.8127
-- Precision: 0.8259
-- Recall: 0.9807
-- F1 Score: 0.8967
