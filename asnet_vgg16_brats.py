@@ -1,5 +1,3 @@
-# ver1_asnet_vgg16_brats.py
-
 import os
 import time
 import tensorflow as tf
@@ -204,6 +202,7 @@ if __name__ == "__main__":
     # --- Train ---
     model_instance = None
     history = None
+    inference_timing_results = None
     if not os.path.exists(COMPLETION_FILE):
         print(
             f"\nCompletion file {COMPLETION_FILE} not found. Starting training...")
@@ -233,7 +232,7 @@ if __name__ == "__main__":
 
     # --- Evaluate on TEST set ---
     print("\nStarting evaluation on TEST set...")
-    evaluation_results = evaluate_model(
+    evaluation_results, inference_timing_results = evaluate_model(
         model_func=AS_Net_VGG16,
         dataset_func=prepare_brats_data_gpu,
         strategy=strategy,
@@ -268,7 +267,8 @@ if __name__ == "__main__":
         checkpoint_dir=CHECKPOINT_DIR,
         checkpoint_best_path=CHECKPOINT_BEST_PATH,
         h5_data_dir=H5_DATA_DIR,
-        start_time=script_start_time
+        start_time=script_start_time,
+        inference_timing=inference_timing_results
     )
 
     # --- Cleanup ---

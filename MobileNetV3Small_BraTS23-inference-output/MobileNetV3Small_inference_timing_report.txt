@@ -1,0 +1,32 @@
+Inference Timing Report for MobileNetV3Small
+==================================================
+
+Model: MobileNetV3Small
+Weights: MobileNetV3Small_BraTS23-checkpoints/MobileNetV3Small_BraTS23_as_net_model_best.weights.h5
+Input Size: 224x224x3
+Batch Size (per replica): 32
+Global Batch Size: 32
+Mixed Precision: False
+
+General Timing:
+--------------
+Total prediction time: 47.1923 seconds
+Total wall clock time: 333.0861 seconds
+Number of batches: 611
+Average time per batch: 0.0772 seconds
+Total slices processed: 19530
+Average time per slice: 0.002416 seconds
+
+Patient-Level Statistics:
+-----------------------
+Number of patients: 126
+Average time per patient: 8.7523 seconds
+
+Top 5 Patients by Processing Time:
+1. BraTS-GLI-01409-000: 28.2485 seconds (155 slices, 0.182249 s/slice)
+2. BraTS-GLI-00774-001: 28.1827 seconds (155 slices, 0.181824 s/slice)
+3. BraTS-GLI-00715-001: 28.0146 seconds (155 slices, 0.180739 s/slice)
+4. BraTS-GLI-00581-000: 17.8360 seconds (155 slices, 0.115071 s/slice)
+5. BraTS-GLI-01440-000: 17.7463 seconds (155 slices, 0.114492 s/slice)
+
+Note: Patient timing is approximate as batches may contain slices from multiple patients.

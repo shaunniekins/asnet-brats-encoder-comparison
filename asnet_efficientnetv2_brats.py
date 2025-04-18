@@ -75,7 +75,7 @@ USE_MIXED_PRECISION = False
 COMBINED_LOSS_WEIGHTS = {'bce_weight': 0.5,
                          'dice_weight': 0.5, 'class_weight': 100.0}
 
-# Paths
+# Paths (use VARIANT_NAME)
 CHECKPOINT_DIR = f"./{VARIANT_NAME}-checkpoints"
 CHECKPOINT_PATH = f"{CHECKPOINT_DIR}/{VARIANT_NAME}_as_net_model.weights.h5"
 CHECKPOINT_BEST_PATH = f"{CHECKPOINT_DIR}/{VARIANT_NAME}_as_net_model_best.weights.h5"
@@ -354,6 +354,7 @@ if __name__ == "__main__":
     # --- Train ---
     model_instance = None
     history = None
+    inference_timing_results = None
     if not os.path.exists(COMPLETION_FILE):
         print(
             f"\nCompletion file {COMPLETION_FILE} not found. Starting training...")
@@ -384,7 +385,8 @@ if __name__ == "__main__":
 
     # --- Evaluate on TEST set ---
     print("\nStarting evaluation on TEST set...")
-    evaluation_results = evaluate_model(
+    # Capture both evaluation metrics and inference timing
+    evaluation_results, inference_timing_results = evaluate_model(
         model_func=AS_Net_EfficientNetV2,
         dataset_func=prepare_brats_data_gpu,
         strategy=strategy,
@@ -421,7 +423,8 @@ if __name__ == "__main__":
         checkpoint_dir=CHECKPOINT_DIR,
         checkpoint_best_path=CHECKPOINT_BEST_PATH,
         h5_data_dir=H5_DATA_DIR,
-        start_time=script_start_time
+        start_time=script_start_time,
+        inference_timing=inference_timing_results
     )
 
     # --- Cleanup ---

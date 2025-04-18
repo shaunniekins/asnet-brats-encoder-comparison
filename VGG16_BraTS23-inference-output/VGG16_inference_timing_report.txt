@@ -1,0 +1,32 @@
+Inference Timing Report for VGG16
+==================================================
+
+Model: VGG16
+Weights: VGG16_BraTS23-checkpoints/VGG16_BraTS23_as_net_model_best.weights.h5
+Input Size: 224x224x3
+Batch Size (per replica): 32
+Global Batch Size: 32
+Mixed Precision: False
+
+General Timing:
+--------------
+Total prediction time: 106.0238 seconds
+Total wall clock time: 405.5736 seconds
+Number of batches: 611
+Average time per batch: 0.1735 seconds
+Total slices processed: 19530
+Average time per slice: 0.005429 seconds
+
+Patient-Level Statistics:
+-----------------------
+Number of patients: 126
+Average time per patient: 22.4795 seconds
+
+Top 5 Patients by Processing Time:
+1. BraTS-GLI-01409-000: 38.3554 seconds (155 slices, 0.247454 s/slice)
+2. BraTS-GLI-00774-001: 37.9207 seconds (155 slices, 0.244650 s/slice)
+3. BraTS-GLI-00715-001: 37.6037 seconds (155 slices, 0.242605 s/slice)
+4. BraTS-GLI-00581-000: 31.6985 seconds (155 slices, 0.204506 s/slice)
+5. BraTS-GLI-01440-000: 31.3692 seconds (155 slices, 0.202382 s/slice)
+
+Note: Patient timing is approximate as batches may contain slices from multiple patients.

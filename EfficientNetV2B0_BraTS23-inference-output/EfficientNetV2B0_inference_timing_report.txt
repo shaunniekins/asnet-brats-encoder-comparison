@@ -1,0 +1,32 @@
+Inference Timing Report for EfficientNetV2B0
+==================================================
+
+Model: EfficientNetV2B0
+Weights: EfficientNetV2B0_BraTS23-checkpoints/EfficientNetV2B0_BraTS23_as_net_model_best.weights.h5
+Input Size: 224x224x3
+Batch Size (per replica): 32
+Global Batch Size: 32
+Mixed Precision: False
+
+General Timing:
+--------------
+Total prediction time: 74.9541 seconds
+Total wall clock time: 373.5614 seconds
+Number of batches: 611
+Average time per batch: 0.1227 seconds
+Total slices processed: 19530
+Average time per slice: 0.003838 seconds
+
+Patient-Level Statistics:
+-----------------------
+Number of patients: 126
+Average time per patient: 14.2863 seconds
+
+Top 5 Patients by Processing Time:
+1. BraTS-GLI-01409-000: 40.7976 seconds (155 slices, 0.263210 s/slice)
+2. BraTS-GLI-00715-001: 40.6450 seconds (155 slices, 0.262226 s/slice)
+3. BraTS-GLI-00774-001: 40.1614 seconds (155 slices, 0.259106 s/slice)
+4. BraTS-GLI-00581-000: 26.4096 seconds (155 slices, 0.170384 s/slice)
+5. BraTS-GLI-01414-000: 26.0347 seconds (155 slices, 0.167965 s/slice)
+
+Note: Patient timing is approximate as batches may contain slices from multiple patients.

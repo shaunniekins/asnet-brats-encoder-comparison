@@ -798,6 +798,7 @@ def evaluate_model(
     """Evaluates the trained AS-Net model variant on the TEST split."""
     print(f"\n--- Starting Model Evaluation on TEST data ({variant_name}) ---")
     evaluation_results = None
+    inference_timing = {}
 
     try:
         # 1. Load TEST Data using the modified loader
@@ -811,6 +812,19 @@ def evaluate_model(
             buffer_size=10,  # Not used for shuffle, placeholder
             input_channels=input_channels,
         )
+        # Count total number of test slices for timing calculations
+        num_test_slices = 0
+        try:
+            # Efficiently count elements without loading data
+            # Note: This might iterate once if cardinality is unknown
+            num_test_slices = test_dataset.reduce(
+                0, lambda x, _: x + tf.shape(_[0])[0]).numpy()
+            print(f"Found {num_test_slices} total test slices.")
+        except Exception as count_err:
+            print(
+                f"Warning: Could not accurately determine total test slices: {count_err}. Per-slice timing might be inaccurate.")
+            num_test_slices = -1  # Indicate unknown count
+
         print("Test dataset loaded.")
 
         # 2. Load or Use Provided Model
@@ -819,31 +833,45 @@ def evaluate_model(
             print("Loading model weights for evaluation.")
             checkpoint_to_load = None
             # Prefer best checkpoint based on validation performance
-            best_ckpt_index = checkpoint_best_path + ".index"
-            if os.path.exists(checkpoint_best_path) and os.path.exists(best_ckpt_index):
+            best_ckpt_index = checkpoint_best_path + ".index"  # Check for index file too
+            # Check if the .weights.h5 file exists (or the base name if extension is different)
+            best_ckpt_base = os.path.splitext(checkpoint_best_path)[0]
+            # Find files starting with the base name
+            best_ckpt_files = glob.glob(best_ckpt_base + "*")
+            # Check for sharded data files
+            best_ckpt_data_exists = any('.data-' in f for f in best_ckpt_files)
+
+            if best_ckpt_files and (os.path.exists(best_ckpt_index) or best_ckpt_data_exists):
                 print(
                     f"Using best checkpoint (from validation): {checkpoint_best_path}")
-                checkpoint_to_load = checkpoint_best_path
+                checkpoint_to_load = checkpoint_best_path  # Use the base path for loading
             else:
                 print(
-                    f"Warning: Best checkpoint not found or index missing at {checkpoint_best_path} / {best_ckpt_index}.")
+                    f"Warning: Best checkpoint files not found or index/data missing near {checkpoint_best_path}.")
                 # Fallback to last epoch checkpoint
+                last_checkpoint_dir = os.path.dirname(checkpoint_path)
                 last_checkpoint = tf.train.latest_checkpoint(
-                    os.path.dirname(checkpoint_path))
+                    last_checkpoint_dir)
                 if last_checkpoint:
+                    # Check for index/data files for the latest checkpoint
                     last_ckpt_index = last_checkpoint + ".index"
-                    if os.path.exists(last_checkpoint) and os.path.exists(last_ckpt_index):
+                    last_ckpt_base = os.path.splitext(last_checkpoint)[0]
+                    last_ckpt_files = glob.glob(last_ckpt_base + "*")
+                    last_ckpt_data_exists = any(
+                        '.data-' in f for f in last_ckpt_files)
+
+                    if last_ckpt_files and (os.path.exists(last_ckpt_index) or last_ckpt_data_exists):
                         print(
                             f"Attempting to load last epoch checkpoint: {last_checkpoint}")
                         checkpoint_to_load = last_checkpoint
                     else:
                         print(
-                            f"Error: Last checkpoint file or index missing ({last_checkpoint}). Cannot evaluate.")
-                        return None
+                            f"Error: Last checkpoint file or index/data missing ({last_checkpoint}). Cannot evaluate.")
+                        return None, None
                 else:
                     print(
-                        f"Error: No suitable checkpoint found in {os.path.dirname(checkpoint_path)}. Cannot evaluate.")
-                    return None
+                        f"Error: No suitable checkpoint found in {last_checkpoint_dir}. Cannot evaluate.")
+                    return None, None
 
             print("Rebuilding model architecture for evaluation...")
             with strategy.scope():
@@ -883,6 +911,7 @@ def evaluate_model(
                 model_eval.compile(optimizer=optimizer,
                                    loss=loss_instance, metrics=compiled_metrics)
                 print(f"Loading weights from {checkpoint_to_load}...")
+                # Use the base path for loading, TF handles sharded files
                 load_status = model_eval.load_weights(checkpoint_to_load)
                 # Allow optimizer state mismatch etc.
                 load_status.expect_partial()
@@ -927,15 +956,61 @@ def evaluate_model(
                         optimizer=optimizer, loss=loss_instance, metrics=compiled_metrics)
                     print("Provided model compiled.")
 
-        # 3. Evaluate on the TEST dataset
-        print("Evaluating model on TEST set...")
+        # 3. Evaluate on the TEST dataset (Metrics Calculation)
+        print("Evaluating model on TEST set (calculating metrics)...")
         evaluation_results = model_eval.evaluate(
             test_dataset,
             verbose=1,
             return_dict=True
         )
 
-        # 4. Print Metrics and Calculate F1 Score
+        # 4. Measure Inference Time Separately
+        print("\nMeasuring inference time on TEST set...")
+        total_prediction_time = 0.0
+        num_batches = 0
+        # Ensure we iterate from the beginning if dataset was consumed by evaluate
+        test_iterator = iter(test_dataset)
+        start_inference_time = time.time()
+        for batch_data in test_iterator:
+            images, _ = batch_data  # We only need images for prediction
+            batch_start_time = time.time()
+            _ = model_eval.predict_on_batch(images)  # Run prediction
+            batch_end_time = time.time()
+            total_prediction_time += (batch_end_time - batch_start_time)
+            num_batches += 1
+        end_inference_time = time.time()
+        # Alternative total time measurement
+        total_wall_time = end_inference_time - start_inference_time
+
+        if num_batches > 0:
+            avg_time_per_batch = total_prediction_time / num_batches
+            inference_timing['total_prediction_time_s'] = total_prediction_time
+            # Wall clock time for the loop
+            inference_timing['total_wall_time_s'] = total_wall_time
+            inference_timing['num_test_batches'] = num_batches
+            inference_timing['avg_time_per_batch_s'] = avg_time_per_batch
+            print(
+                f"Total prediction time (sum of predict_on_batch): {total_prediction_time:.4f} seconds")
+            print(
+                f"Total wall clock time for prediction loop: {total_wall_time:.4f} seconds")
+            print(f"Average time per batch: {avg_time_per_batch:.4f} seconds")
+            if num_test_slices > 0:
+                avg_time_per_slice = total_prediction_time / num_test_slices
+                inference_timing['avg_time_per_slice_s'] = avg_time_per_slice
+                print(
+                    f"Average time per slice: {avg_time_per_slice:.6f} seconds")
+            else:
+                inference_timing['avg_time_per_slice_s'] = - \
+                    1.0  # Indicate unknown
+        else:
+            print("Warning: No batches processed during inference timing.")
+            inference_timing['total_prediction_time_s'] = 0.0
+            inference_timing['total_wall_time_s'] = 0.0
+            inference_timing['num_test_batches'] = 0
+            inference_timing['avg_time_per_batch_s'] = 0.0
+            inference_timing['avg_time_per_slice_s'] = 0.0
+
+        # 5. Print Metrics and Calculate F1 Score
         print("\nKeras Evaluation Results (Test Set):")
         # Define preferred order, add 'f1_score' later
         metric_order = ['loss', 'binary_accuracy',
@@ -959,10 +1034,10 @@ def evaluate_model(
         # Add F1 to preferred print order for file
         metric_order.append('f1_score')
 
-        # 5. Save Performance Metrics
+        # 6. Save Performance Metrics (including timing)
         try:
             perf_file_path = os.path.join(
-                output_folder, "test_performances.txt")
+                output_folder, "test_performances.txt")  # Save as test performance
             with open(perf_file_path, "w") as file_perf:
                 file_perf.write(
                     f"Test Set Evaluation Metrics ({variant_name}):\n")
@@ -976,29 +1051,54 @@ def evaluate_model(
                         file_perf.write(
                             f"- {name.replace('_', ' ').title()}: {value:.4f}\n")
 
+                # Add Inference Timing
+                file_perf.write("\nInference Timing (Test Set):\n")
+                file_perf.write("----------------------------\n")
+                if inference_timing:
+                    file_perf.write(
+                        f"- Total Prediction Time (sum batch): {inference_timing.get('total_prediction_time_s', 0.0):.4f} s\n")
+                    file_perf.write(
+                        f"- Total Wall Clock Time (loop): {inference_timing.get('total_wall_time_s', 0.0):.4f} s\n")
+                    file_perf.write(
+                        f"- Number of Batches: {inference_timing.get('num_test_batches', 0)}\n")
+                    file_perf.write(
+                        f"- Avg Time per Batch: {inference_timing.get('avg_time_per_batch_s', 0.0):.4f} s\n")
+                    if num_test_slices > 0:
+                        file_perf.write(
+                            f"- Avg Time per Slice: {inference_timing.get('avg_time_per_slice_s', 0.0):.6f} s\n")
+                    else:
+                        file_perf.write(
+                            "- Avg Time per Slice: N/A (slice count unknown)\n")
+                    file_perf.write(
+                        f"- Total Test Slices: {num_test_slices if num_test_slices > 0 else 'Unknown'}\n")
+                else:
+                    file_perf.write("Timing information not available.\n")
+
             print(f"TEST evaluation results saved to {perf_file_path}")
         except Exception as e:
             print(f"Error saving test performance metrics: {e}")
 
-        # 6. Save Prediction Examples (from TEST dataset)
+        # 7. Save Prediction Examples (from TEST dataset)
         print("\nGenerating prediction examples from TEST set...")
-
+        # Pass the TEST dataset to the updated save function
         save_prediction_examples(
             model=model_eval,
-            dataset=test_dataset,
+            dataset=test_dataset,  # Use the test dataset
             output_folder=output_folder,
             num_examples=num_examples_to_save,
             threshold=threshold
         )
 
         print(f"--- Evaluation Finished ({variant_name}) ---")
-        return evaluation_results
+        # Return both metrics and timing info
+        return evaluation_results, inference_timing
 
     except Exception as e:
         print(f"An error occurred during evaluation: {e}")
         import traceback
         traceback.print_exc()
-        return None
+        # Return None for both if error occurs
+        return None, None
     finally:
         print("Cleaning up resources after evaluation...")
         if 'test_dataset' in locals():
@@ -1018,6 +1118,7 @@ def save_prediction_examples(model, dataset, output_folder, num_examples=5, thre
     where image_model_input is the 3-channel preprocessed image.
     """
     print(f"Saving {num_examples} comparison prediction examples...")
+    # Save to test_examples subfolder
     examples_dir = os.path.join(output_folder, "test_examples")
     os.makedirs(examples_dir, exist_ok=True)
 
@@ -1276,7 +1377,8 @@ def create_completion_notification(
     h5_data_dir,          # Add H5 data source dir
     # split_dir,          # Add split source dir (Optional, can derive from h5_data_dir if structure is fixed)
     # Optional timing
-    start_time=None
+    start_time=None,
+    inference_timing=None
 ):
     """Creates a text file summarizing the training run and test results."""
     print("\n--- Creating Completion Notification ---")
@@ -1323,13 +1425,38 @@ def create_completion_notification(
             if os.path.exists(perf_file_path):
                 try:
                     with open(perf_file_path, "r") as perf_file:
-                        f.write(perf_file.read())
+                        # Read only the metrics part, skip timing part if present
+                        lines = perf_file.readlines()
+                        for line in lines:
+                            if "Inference Timing" in line:
+                                break
+                            f.write(line)
                 except Exception as read_err:
                     f.write(
                         f"Note: Error reading test performance file ({perf_file_path}): {read_err}\n")
             else:
                 f.write(
                     f"Note: Test performance file not found ({perf_file_path}). Evaluation failed or not run.\n")
+
+            # Add Inference Timing separately
+            f.write("\n--- Inference Timing (Test Set) ---\n")
+            if inference_timing:
+                f.write(
+                    f"- Total Prediction Time (sum batch): {inference_timing.get('total_prediction_time_s', 0.0):.4f} s\n")
+                f.write(
+                    f"- Total Wall Clock Time (loop): {inference_timing.get('total_wall_time_s', 0.0):.4f} s\n")
+                f.write(
+                    f"- Number of Batches: {inference_timing.get('num_test_batches', 0)}\n")
+                f.write(
+                    f"- Avg Time per Batch: {inference_timing.get('avg_time_per_batch_s', 0.0):.4f} s\n")
+                avg_slice_time = inference_timing.get(
+                    'avg_time_per_slice_s', -1.0)
+                if avg_slice_time >= 0:
+                    f.write(f"- Avg Time per Slice: {avg_slice_time:.6f} s\n")
+                else:
+                    f.write("- Avg Time per Slice: N/A (slice count unknown)\n")
+            else:
+                f.write("Timing information not available.\n")
 
         print(f"Completion notification saved to: {completion_file}")
 
