@@ -22,4 +22,4 @@ The core components of this repository include:
 
 ## Dataset
 
-The models were trained and evaluated using the **Brain Tumor Segmentation (BraTS2023)** dataset. The specific dataset used was the ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData. Preprocessing steps involved converting the original NIfTI files into HDF5 format for efficient loading, organized into training, validation, and test splits.
+The models were trained and evaluated using the **Brain Tumor Segmentation (BraTS2023)** dataset. The specific dataset used was the ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData (it should be renamed into BraTS23_TrainingData). Preprocessing steps involved converting the original NIfTI files into HDF5 format for efficient loading, organized into training, validation, and test splits.

@@ -27,61 +27,63 @@ from latest.asnet_common import (
 
 # --- EfficientNetV2 Specific Constants ---
 valid_variants = ['B0', 'B1', 'B2', 'B3']
+default_variant = 'B0'
 
 if len(sys.argv) > 1:
     variant_arg = sys.argv[1].upper()
     if variant_arg in valid_variants:
-        EFFICIENTNET_VARIANT = f'EfficientNetV2{variant_arg}'
+        EFFICIENTNET_VARIANT_SUFFIX = variant_arg  # e.g., B0
     else:
         print(
-            f"Error: Unknown variant '{sys.argv[1]}'. Using 'B0' as default.")
-        print("Usage: %run asnet_efficientnetv2_brats.py [B0|B1|B2|B3]")
-        EFFICIENTNET_VARIANT = 'EfficientNetV2B0'
+            f"Error: Unknown variant '{sys.argv[1]}'. Using '{default_variant}' as default.")
+        print(
+            f"Usage: %run {os.path.basename(__file__)} [{'|'.join(valid_variants)}]")
+        EFFICIENTNET_VARIANT_SUFFIX = default_variant
 else:
-    EFFICIENTNET_VARIANT = 'EfficientNetV2B0'
+    EFFICIENTNET_VARIANT_SUFFIX = default_variant
+
+# e.g., EfficientNetV2B0
+EFFICIENTNET_VARIANT = f'EfficientNetV2{EFFICIENTNET_VARIANT_SUFFIX}'
+# e.g., EfficientNetV2B0 - Changed from f"{EFFICIENTNET_VARIANT}_BraTS23"
+VARIANT_NAME = EFFICIENTNET_VARIANT
 
 print(f"Selected EfficientNetV2 variant: {EFFICIENTNET_VARIANT}")
 
-VARIANT_NAME = f"{EFFICIENTNET_VARIANT}_BraTS23"
-VARIANT_SUFFIX = EFFICIENTNET_VARIANT.lower()
-
-# Input Dimensions based on Variant
-if EFFICIENTNET_VARIANT == 'EfficientNetV2B0':
-    IMG_HEIGHT, IMG_WIDTH = 224, 224
-elif EFFICIENTNET_VARIANT == 'EfficientNetV2B1':
-    IMG_HEIGHT, IMG_WIDTH = 240, 240
-elif EFFICIENTNET_VARIANT == 'EfficientNetV2B2':
-    IMG_HEIGHT, IMG_WIDTH = 260, 260
-elif EFFICIENTNET_VARIANT == 'EfficientNetV2B3':
-    IMG_HEIGHT, IMG_WIDTH = 300, 300
-else:
-    raise ValueError(
-        f"Unsupported EfficientNetV2 variant: {EFFICIENTNET_VARIANT}")
-
-INPUT_CHANNELS = 3  # EfficientNetV2 needs 3 channels
+# --- Model & Data Constants (Adjust defaults as needed) ---
+IMG_HEIGHT = 224  # EfficientNetV2 often uses specific sizes, check recommendations
+IMG_WIDTH = 224
+INPUT_CHANNELS = 3
 
 # --- Data Loading ---
-H5_DATA_DIR = './preprocessed_brats23_h5_slices'
+H5_DATA_DIR = './BraTS23_preprocessed_h5_slices'
 
-# Training
-BATCH_SIZE_PER_REPLICA = 32
+# --- Training ---
+BATCH_SIZE_PER_REPLICA = 32  # Adjust based on GPU memory for EfficientNetV2
 LEARNING_RATE = 1e-4
 NUM_EPOCHS = 30
 BUFFER_SIZE = 500
 THRESHOLD = 0.5
-USE_MIXED_PRECISION = False
+USE_MIXED_PRECISION = False  # EfficientNetV2 benefits from mixed precision
 
 # Loss Weights
 COMBINED_LOSS_WEIGHTS = {'bce_weight': 0.5,
                          'dice_weight': 0.5, 'class_weight': 100.0}
 
-# Paths (use VARIANT_NAME)
-CHECKPOINT_DIR = f"./{VARIANT_NAME}-checkpoints"
-CHECKPOINT_PATH = f"{CHECKPOINT_DIR}/{VARIANT_NAME}_as_net_model.weights.h5"
-CHECKPOINT_BEST_PATH = f"{CHECKPOINT_DIR}/{VARIANT_NAME}_as_net_model_best.weights.h5"
-OUTPUT_DIR = f"{VARIANT_NAME}-output"
-COMPLETION_FOLDER = "completion-notifications"
-COMPLETION_FILE = f"{COMPLETION_FOLDER}/{VARIANT_NAME}-asnet-finished.txt"
+# Paths (New Structure)
+BASE_CHECKPOINT_DIR = "./BraTS23_checkpoints"
+BASE_OUTPUT_DIR = "./BraTS23_output"
+BASE_COMPLETION_DIR = "./BraTS23_completion_notifications"
+
+CHECKPOINT_DIR = os.path.join(BASE_CHECKPOINT_DIR, VARIANT_NAME)
+OUTPUT_DIR = os.path.join(BASE_OUTPUT_DIR, VARIANT_NAME)
+COMPLETION_FOLDER = BASE_COMPLETION_DIR  # Keep the base folder name consistent
+
+CHECKPOINT_PATH = os.path.join(
+    CHECKPOINT_DIR, f"{VARIANT_NAME}_as_net_model.weights.h5")
+CHECKPOINT_BEST_PATH = os.path.join(
+    CHECKPOINT_DIR, f"{VARIANT_NAME}_as_net_model_best.weights.h5")
+COMPLETION_FILE = os.path.join(
+    COMPLETION_FOLDER, f"{VARIANT_NAME}-asnet-finished.txt")
 
 # Create directories
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)

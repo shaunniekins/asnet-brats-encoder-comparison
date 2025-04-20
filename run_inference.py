@@ -4,15 +4,13 @@ import argparse
 import tensorflow as tf
 import numpy as np
 import glob
-import gc
-import h5py 
+import h5py
 import re
 from collections import defaultdict
 
 # Import necessary components from common and model definition
 from ver1_asnet_common import (
     setup_gpu_and_mixed_precision,
-    prepare_brats_data_gpu,
     save_prediction_examples,
     final_cleanup
 )
@@ -38,24 +36,35 @@ MODEL_BUILDERS = {
     'EfficientNetV2B3': lambda input_size: AS_Net_EfficientNetV2(input_size=input_size, variant='EfficientNetV2B3')
 }
 
+# --- Base Output Directory ---
+BASE_INFERENCE_OUTPUT_DIR = "./BraTS23_inference_output"
+
+
 def extract_patient_id(filename):
     """Extract patient ID from BraTS H5 slice filename."""
-    match = re.match(r'(BraTS-GLI-\d+-\d+)_slice_\d+\.h5', os.path.basename(filename))
+    match = re.match(r'(BraTS-GLI-\d+-\d+)_slice_\d+\.h5',
+                     os.path.basename(filename))
     if match:
         return match.group(1)
     return "unknown"  # Fallback for unrecognized filenames
 
+
 def run_inference(args):
     """Runs inference using a trained model on specified H5 data."""
     script_start_time = time.time()
+
+    # --- Construct the final output directory ---
+    # Output will be saved in BASE_INFERENCE_OUTPUT_DIR / VARIANT_NAME / USER_SPECIFIED_SUBDIR
+    output_dir = os.path.join(
+        BASE_INFERENCE_OUTPUT_DIR, args.variant_name, args.output_subdir)
     print(f"--- Starting Inference ({args.variant_name}) ---")
     print(f"Model Weights: {args.weights_path}")
     print(f"Inference Data Dir: {args.h5_data_dir}")
-    print(f"Output Dir: {args.output_dir}")
+    print(f"Output Dir: {output_dir}")  # Use the constructed path
     print(f"Target Image Size: {args.img_height}x{args.img_width}")
     print(f"Batch Size (per replica): {args.batch_size_per_replica}")
 
-    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)  # Use the constructed path
 
     # 1. Setup GPU and get strategy, global batch size
     strategy, global_batch_size = setup_gpu_and_mixed_precision(
@@ -67,23 +76,24 @@ def run_inference(args):
     print("\nPreparing inference dataset...")
     try:
         if not os.path.isdir(args.h5_data_dir):
-             raise FileNotFoundError(f"H5 data directory not found at {args.h5_data_dir}")
+            raise FileNotFoundError(
+                f"H5 data directory not found at {args.h5_data_dir}")
 
         h5_files = glob.glob(os.path.join(args.h5_data_dir, "*.h5"))
         if not h5_files:
             raise ValueError(f"No H5 files found in {args.h5_data_dir}.")
         print(f"Found {len(h5_files)} H5 slice files for inference.")
         num_inference_slices = len(h5_files)
-        
+
         # Group files by patient ID for later analysis
         patient_slices = defaultdict(list)
         for file_path in h5_files:
             patient_id = extract_patient_id(file_path)
             patient_slices[patient_id].append(file_path)
-            
+
         num_patients = len(patient_slices)
         print(f"Found slices from {num_patients} unique patients.")
-        
+
         # Create patient statistics
         patients_stats = {
             'patient_ids': list(patient_slices.keys()),
@@ -101,16 +111,18 @@ def run_inference(args):
                     with h5py.File(path, "r") as hf:
                         image_preprocessed = hf["image"][()].astype(np.float32)
                         if "mask" in hf:
-                             mask_binary = hf["mask"][()].astype(np.float32)
+                            mask_binary = hf["mask"][()].astype(np.float32)
                         else:
-                             h, w = image_preprocessed.shape[:2]
-                             mask_binary = np.zeros((h, w, 1), dtype=np.float32)
+                            h, w = image_preprocessed.shape[:2]
+                            mask_binary = np.zeros((h, w, 1), dtype=np.float32)
                         return image_preprocessed, mask_binary
                 except Exception as e:
                     print(f"Error processing file {path}: {e}")
                     dummy_h, dummy_w = 240, 240
-                    dummy_image = np.zeros((dummy_h, dummy_w, args.input_channels), dtype=np.float32)
-                    dummy_mask = np.zeros((dummy_h, dummy_w, 1), dtype=np.float32)
+                    dummy_image = np.zeros(
+                        (dummy_h, dummy_w, args.input_channels), dtype=np.float32)
+                    dummy_mask = np.zeros(
+                        (dummy_h, dummy_w, 1), dtype=np.float32)
                     return dummy_image, dummy_mask
 
             image_data, mask_data = tf.py_function(
@@ -129,7 +141,8 @@ def run_inference(args):
                 mask_data, (args.img_height, args.img_width), method='nearest')
             mask_final = tf.cast(mask_resized > 0.5, tf.float32)
 
-            image_final.set_shape([args.img_height, args.img_width, args.input_channels])
+            image_final.set_shape(
+                [args.img_height, args.img_width, args.input_channels])
             mask_final.set_shape([args.img_height, args.img_width, 1])
             return image_final, mask_final
 
@@ -156,10 +169,12 @@ def run_inference(args):
     try:
         model_builder = MODEL_BUILDERS.get(args.variant_name)
         if not model_builder:
-            raise ValueError(f"Unsupported model variant: {args.variant_name}. Available: {list(MODEL_BUILDERS.keys())}")
+            raise ValueError(
+                f"Unsupported model variant: {args.variant_name}. Available: {list(MODEL_BUILDERS.keys())}")
 
         with strategy.scope():
-            model = model_builder(input_size=(args.img_height, args.img_width, args.input_channels))
+            model = model_builder(input_size=(
+                args.img_height, args.img_width, args.input_channels))
             model.compile(optimizer='adam', loss='binary_crossentropy')
             print(f"Loading weights from {args.weights_path}...")
             model.load_weights(args.weights_path)
@@ -178,35 +193,35 @@ def run_inference(args):
     num_batches = 0
     inference_iterator = iter(inference_dataset)
     start_inference_time = time.time()
-    
+
     file_to_batch_map = {}
     batch_idx = 0
     remaining_files = h5_files.copy()
-    
+
     patient_batch_times = defaultdict(list)
     batch_patient_map = {}
 
     for batch_data in inference_iterator:
         batch_files = remaining_files[:global_batch_size]
         remaining_files = remaining_files[global_batch_size:]
-        
+
         batch_patients = set()
         for i, file_path in enumerate(batch_files):
             patient_id = extract_patient_id(file_path)
             batch_patients.add(patient_id)
             file_to_batch_map[file_path] = (batch_idx, i)
         batch_patient_map[batch_idx] = list(batch_patients)
-        
+
         images, _ = batch_data
         batch_start_time = time.time()
         batch_predictions = model.predict_on_batch(images)
         batch_end_time = time.time()
         batch_time = batch_end_time - batch_start_time
         total_prediction_time += batch_time
-        
+
         for patient_id in batch_patients:
             patient_batch_times[patient_id].append(batch_time)
-        
+
         all_predictions.append(batch_predictions)
         num_batches += 1
         print(f"Processed batch {num_batches}...", end='\r')
@@ -215,15 +230,17 @@ def run_inference(args):
     end_inference_time = time.time()
     total_wall_time = end_inference_time - start_inference_time
     print(f"\nProcessed {num_batches} batches.")
-    
+
     patient_total_times = {}
     patient_avg_slice_time = {}
     for patient_id, batch_times in patient_batch_times.items():
         patient_total_times[patient_id] = sum(batch_times)
         num_slices = len(patient_slices[patient_id])
-        patient_avg_slice_time[patient_id] = patient_total_times[patient_id] / num_slices if num_slices > 0 else 0
+        patient_avg_slice_time[patient_id] = patient_total_times[patient_id] / \
+            num_slices if num_slices > 0 else 0
 
-    avg_patient_time = sum(patient_total_times.values()) / len(patient_total_times) if patient_total_times else 0
+    avg_patient_time = sum(patient_total_times.values()) / \
+        len(patient_total_times) if patient_total_times else 0
 
     timing_results = {
         'total_prediction_time_s': total_prediction_time,
@@ -243,14 +260,16 @@ def run_inference(args):
     print("\n--- Inference Timing Results ---")
     if num_batches > 0:
         avg_time_per_batch = timing_results['avg_time_per_batch_s']
-        print(f"Total prediction time (sum of predict_on_batch): {total_prediction_time:.4f} seconds")
-        print(f"Total wall clock time for prediction loop: {total_wall_time:.4f} seconds")
+        print(
+            f"Total prediction time (sum of predict_on_batch): {total_prediction_time:.4f} seconds")
+        print(
+            f"Total wall clock time for prediction loop: {total_wall_time:.4f} seconds")
         print(f"Average time per batch: {avg_time_per_batch:.4f} seconds")
         if num_inference_slices > 0:
             avg_time_per_slice = timing_results['avg_time_per_slice_s']
             print(f"Average time per slice: {avg_time_per_slice:.6f} seconds")
         else:
-            print(f"Average time per slice: N/A (slice count unknown)")
+            print("Average time per slice: N/A (slice count unknown)")
         print(f"Total slices processed: {num_inference_slices}")
         print(f"Global batch size used: {global_batch_size}")
         print(f"Number of patients: {num_patients}")
@@ -258,50 +277,62 @@ def run_inference(args):
     else:
         print("Warning: No batches processed during inference.")
 
-    timing_report_path = os.path.join(args.output_dir, f"{args.variant_name}_inference_timing_report.txt")
+    timing_report_path = os.path.join(
+        output_dir, f"{args.variant_name}_inference_timing_report.txt")  # Use constructed path
     try:
         with open(timing_report_path, 'w') as f:
             f.write(f"Inference Timing Report for {args.variant_name}\n")
             f.write("="*50 + "\n\n")
             f.write(f"Model: {args.variant_name}\n")
             f.write(f"Weights: {args.weights_path}\n")
-            f.write(f"Input Size: {args.img_height}x{args.img_width}x{args.input_channels}\n")
-            f.write(f"Batch Size (per replica): {args.batch_size_per_replica}\n")
+            f.write(
+                f"Input Size: {args.img_height}x{args.img_width}x{args.input_channels}\n")
+            f.write(
+                f"Batch Size (per replica): {args.batch_size_per_replica}\n")
             f.write(f"Global Batch Size: {global_batch_size}\n")
             f.write(f"Mixed Precision: {args.use_mixed_precision}\n\n")
-            
+
             f.write("General Timing:\n")
             f.write("--------------\n")
-            f.write(f"Total prediction time: {timing_results['total_prediction_time_s']:.4f} seconds\n")
-            f.write(f"Total wall clock time: {timing_results['total_wall_time_s']:.4f} seconds\n")
+            f.write(
+                f"Total prediction time: {timing_results['total_prediction_time_s']:.4f} seconds\n")
+            f.write(
+                f"Total wall clock time: {timing_results['total_wall_time_s']:.4f} seconds\n")
             f.write(f"Number of batches: {timing_results['num_batches']}\n")
-            f.write(f"Average time per batch: {timing_results['avg_time_per_batch_s']:.4f} seconds\n")
-            f.write(f"Total slices processed: {timing_results['total_slices']}\n")
-            f.write(f"Average time per slice: {timing_results['avg_time_per_slice_s']:.6f} seconds\n\n")
-            
+            f.write(
+                f"Average time per batch: {timing_results['avg_time_per_batch_s']:.4f} seconds\n")
+            f.write(
+                f"Total slices processed: {timing_results['total_slices']}\n")
+            f.write(
+                f"Average time per slice: {timing_results['avg_time_per_slice_s']:.6f} seconds\n\n")
+
             f.write("Patient-Level Statistics:\n")
             f.write("-----------------------\n")
             f.write(f"Number of patients: {timing_results['num_patients']}\n")
-            f.write(f"Average time per patient: {timing_results['avg_time_per_patient_s']:.4f} seconds\n\n")
-            
+            f.write(
+                f"Average time per patient: {timing_results['avg_time_per_patient_s']:.4f} seconds\n\n")
+
             f.write("Top 5 Patients by Processing Time:\n")
             for i, (patient_id, time_taken) in enumerate(timing_results['top_5_patients_by_time'], 1):
                 slices = len(patient_slices[patient_id])
-                f.write(f"{i}. {patient_id}: {time_taken:.4f} seconds ({slices} slices, {time_taken/slices:.6f} s/slice)\n")
-            
-            f.write("\nNote: Patient timing is approximate as batches may contain slices from multiple patients.\n")
-        
+                f.write(
+                    f"{i}. {patient_id}: {time_taken:.4f} seconds ({slices} slices, {time_taken/slices:.6f} s/slice)\n")
+
+            f.write(
+                "\nNote: Patient timing is approximate as batches may contain slices from multiple patients.\n")
+
         print(f"\nTiming report saved to: {timing_report_path}")
     except Exception as e:
         print(f"Error saving timing report: {e}")
 
     # 5. Save Prediction Examples (Visual Overlays)
     if args.num_examples_to_save > 0:
-        print(f"\nSaving {args.num_examples_to_save} visual prediction examples...")
+        print(
+            f"\nSaving {args.num_examples_to_save} visual prediction examples...")
         save_prediction_examples(
             model=model,
             dataset=inference_dataset,
-            output_folder=args.output_dir,
+            output_folder=output_dir,  # Use constructed path
             num_examples=args.num_examples_to_save,
             threshold=args.threshold
         )
@@ -316,25 +347,33 @@ def run_inference(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run Inference using a trained AS-Net model.")
+    parser = argparse.ArgumentParser(
+        description="Run Inference using a trained AS-Net model.")
 
     parser.add_argument('--weights_path', type=str, required=True,
                         help='Path to the trained model weights file (.weights.h5 or similar).')
     parser.add_argument('--h5_data_dir', type=str, required=True,
                         help='Path to the directory containing preprocessed H5 slices for inference.')
-    parser.add_argument('--output_dir', type=str, required=True,
-                        help='Directory to save inference results (e.g., example images).')
-    parser.add_argument('--variant_name', type=str, required=True, 
+    parser.add_argument('--output_subdir', type=str, default='results',
+                        help='Subdirectory name within ./BraTS23_inference_output/<variant_name>/ to save results.')
+    parser.add_argument('--variant_name', type=str, required=True,
                         choices=MODEL_BUILDERS.keys(),
                         help=f'Name of the model variant used for training (e.g., {list(MODEL_BUILDERS.keys())}).')
 
-    parser.add_argument('--img_height', type=int, default=224, help='Target image height.')
-    parser.add_argument('--img_width', type=int, default=224, help='Target image width.')
-    parser.add_argument('--input_channels', type=int, default=3, help='Number of input channels in H5 files.')
-    parser.add_argument('--batch_size_per_replica', type=int, default=32, help='Batch size per GPU replica.')
-    parser.add_argument('--threshold', type=float, default=0.5, help='Threshold for generating binary predictions.')
-    parser.add_argument('--num_examples_to_save', type=int, default=5, help='Number of visual comparison examples to save.')
-    parser.add_argument('--use_mixed_precision', action='store_true', help='Enable mixed precision (float16) computation.')
+    parser.add_argument('--img_height', type=int,
+                        default=224, help='Target image height.')
+    parser.add_argument('--img_width', type=int,
+                        default=224, help='Target image width.')
+    parser.add_argument('--input_channels', type=int, default=3,
+                        help='Number of input channels in H5 files.')
+    parser.add_argument('--batch_size_per_replica', type=int,
+                        default=32, help='Batch size per GPU replica.')
+    parser.add_argument('--threshold', type=float, default=0.5,
+                        help='Threshold for generating binary predictions.')
+    parser.add_argument('--num_examples_to_save', type=int, default=5,
+                        help='Number of visual comparison examples to save.')
+    parser.add_argument('--use_mixed_precision', action='store_true',
+                        help='Enable mixed precision (float16) computation.')
 
     args = parser.parse_args()
 

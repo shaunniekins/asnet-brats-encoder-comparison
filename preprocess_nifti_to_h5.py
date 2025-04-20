@@ -8,11 +8,9 @@ import argparse
 from tqdm import tqdm
 
 # --- Configuration ---
-# Default paths - can be overridden by command-line arguments
-DEFAULT_NIFTI_DIR = './ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData'
-DEFAULT_SPLIT_DIR = './data_splits_brats23'
-# Output base dir for H5 slices
-DEFAULT_OUTPUT_H5_DIR = './preprocessed_brats23_h5_slices'
+DEFAULT_NIFTI_DIR = './BraTS23_TrainingData'
+DEFAULT_SPLIT_DIR = './BraTS23_data_splits'
+DEFAULT_OUTPUT_H5_DIR = './BraTS23_preprocessed_h5_slices'
 
 # Preprocessing Parameters (MUST MATCH what the model expects before resizing)
 # Indices for T1ce (0) and FLAIR (2) in [t1c, t1n, t2f, t2w]

@@ -1,7 +1,7 @@
 AS-Net (EfficientNetV2B1_BraTS23) Training & Testing Completed at: 2025-04-13 16:06:06
 
 Data Configuration (BraTS 2023 Preprocessed H5):
-- H5 Slice Directory: ./preprocessed_brats23_h5_slices
+- H5 Slice Directory: ./BraTS23_preprocessed_h5_slices
 
 Training Configuration:
 - Model Variant: EfficientNetV2B1_BraTS23

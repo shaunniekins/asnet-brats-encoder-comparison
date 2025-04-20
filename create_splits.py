@@ -4,8 +4,8 @@ import argparse
 
 # --- Configuration ---
 # !! IMPORTANT: Set this to the path of the UNZIPPED BraTS 2023 GLI Training Data !!
-BRATS23_TRAIN_DATA_DIR = './ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData'
-OUTPUT_DIR = './data_splits'
+BRATS23_TRAIN_DATA_DIR = './BraTS23_TrainingData'  #
+OUTPUT_DIR = './BraTS23_data_splits'
 
 TRAIN_RATIO = 0.80
 VALIDATION_RATIO = 0.10

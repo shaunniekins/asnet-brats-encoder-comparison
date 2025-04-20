@@ -40,7 +40,8 @@ else:
 print(f"Selected MobileNetV3 variant: {MOBILENET_VARIANT}")
 
 
-VARIANT_NAME = f"MobileNetV3{MOBILENET_VARIANT}_BraTS23"
+# Changed from f"MobileNetV3{MOBILENET_VARIANT}_BraTS23"
+VARIANT_NAME = f"MobileNetV3{MOBILENET_VARIANT}"
 VARIANT_SUFFIX = f"mobilenetv3{MOBILENET_VARIANT.lower()}"
 
 IMG_HEIGHT = 224
@@ -48,7 +49,8 @@ IMG_WIDTH = 224
 INPUT_CHANNELS = 3  # MobileNetV3 needs 3 channels
 
 # --- Data Loading ---
-H5_DATA_DIR = './preprocessed_brats23_h5_slices'
+# Use the new base directory structure
+H5_DATA_DIR = './BraTS23_preprocessed_h5_slices'
 
 # Training
 BATCH_SIZE_PER_REPLICA = 32
@@ -62,13 +64,21 @@ USE_MIXED_PRECISION = False
 COMBINED_LOSS_WEIGHTS = {'bce_weight': 0.5,
                          'dice_weight': 0.5, 'class_weight': 100.0}
 
-# Paths (use VARIANT_NAME)
-CHECKPOINT_DIR = f"./{VARIANT_NAME}-checkpoints"
-CHECKPOINT_PATH = f"{CHECKPOINT_DIR}/{VARIANT_NAME}_as_net_model.weights.h5"
-CHECKPOINT_BEST_PATH = f"{CHECKPOINT_DIR}/{VARIANT_NAME}_as_net_model_best.weights.h5"
-OUTPUT_DIR = f"{VARIANT_NAME}-output"
-COMPLETION_FOLDER = "completion-notifications"
-COMPLETION_FILE = f"{COMPLETION_FOLDER}/{VARIANT_NAME}-asnet-finished.txt"
+# Paths
+BASE_CHECKPOINT_DIR = "./BraTS23_checkpoints"
+BASE_OUTPUT_DIR = "./BraTS23_output"
+BASE_COMPLETION_DIR = "./BraTS23_completion_notifications"
+
+CHECKPOINT_DIR = os.path.join(BASE_CHECKPOINT_DIR, VARIANT_NAME)
+OUTPUT_DIR = os.path.join(BASE_OUTPUT_DIR, VARIANT_NAME)
+COMPLETION_FOLDER = BASE_COMPLETION_DIR
+
+CHECKPOINT_PATH = os.path.join(
+    CHECKPOINT_DIR, f"{VARIANT_NAME}_as_net_model.weights.h5")
+CHECKPOINT_BEST_PATH = os.path.join(
+    CHECKPOINT_DIR, f"{VARIANT_NAME}_as_net_model_best.weights.h5")
+COMPLETION_FILE = os.path.join(
+    COMPLETION_FOLDER, f"{VARIANT_NAME}-asnet-finished.txt")
 
 # Create directories
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
