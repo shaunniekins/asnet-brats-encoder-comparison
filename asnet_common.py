@@ -1,5 +1,3 @@
-# Contains shared components for AS-Net implementations
-
 import os
 import gc
 import time

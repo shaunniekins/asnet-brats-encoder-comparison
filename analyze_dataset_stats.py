@@ -1,4 +1,3 @@
-\
 import os
 import glob
 import re
@@ -10,21 +9,22 @@ SPLITS = ['train', 'validation', 'test']
 # Regex to extract patient ID (adjust if filename pattern is different)
 # Assumes pattern like: BraTS-GLI-XXXXX-XXX_slice_YYY.h5
 PATIENT_ID_REGEX = re.compile(r"^(.*?)_slice_\d+\.h5$")
-# --- End Configuration ---
+
 
 def analyze_stats(base_dir):
     """Analyzes the H5 dataset to count slices and patients."""
     total_slices = 0
     patient_ids_by_split = {split: set() for split in SPLITS}
     slices_per_split = {split: 0 for split in SPLITS}
-    slices_per_patient = defaultdict(int) # Count slices per patient globally
+    slices_per_patient = defaultdict(int)  # Count slices per patient globally
 
     print(f"Analyzing dataset in: {base_dir}")
 
     for split in SPLITS:
         split_dir = os.path.join(base_dir, split)
         if not os.path.isdir(split_dir):
-            print(f"Warning: Directory not found for split '{split}': {split_dir}")
+            print(
+                f"Warning: Directory not found for split '{split}': {split_dir}")
             continue
 
         h5_files = glob.glob(os.path.join(split_dir, "*.h5"))
@@ -42,7 +42,8 @@ def analyze_stats(base_dir):
                 patient_ids_by_split[split].add(patient_id)
                 slices_per_patient[patient_id] += 1
             else:
-                print(f"Warning: Could not extract patient ID from filename: {filename}")
+                print(
+                    f"Warning: Could not extract patient ID from filename: {filename}")
 
     all_patient_ids = set().union(*patient_ids_by_split.values())
     total_unique_patients = len(all_patient_ids)
@@ -52,9 +53,11 @@ def analyze_stats(base_dir):
     for split in SPLITS:
         print(f"  - Slices in '{split}': {slices_per_split[split]}")
 
-    print(f"\\nTotal Unique Patients (across all splits): {total_unique_patients}")
+    print(
+        f"\\nTotal Unique Patients (across all splits): {total_unique_patients}")
     for split in SPLITS:
-        print(f"  - Unique Patients in '{split}': {len(patient_ids_by_split[split])}")
+        print(
+            f"  - Unique Patients in '{split}': {len(patient_ids_by_split[split])}")
 
     # Optional: Print slice distribution summary
     if slices_per_patient:
@@ -67,6 +70,6 @@ def analyze_stats(base_dir):
         print(f"  - Maximum slices for a patient: {max_slices}")
     print("--------------------------\\n")
 
+
 if __name__ == "__main__":
     analyze_stats(H5_BASE_DIR)
-

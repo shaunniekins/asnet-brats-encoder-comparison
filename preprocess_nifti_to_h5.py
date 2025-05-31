@@ -1,4 +1,3 @@
-# preprocess_nifti_to_h5.py
 import os
 import sys
 import numpy as np

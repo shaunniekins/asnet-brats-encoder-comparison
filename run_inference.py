@@ -332,7 +332,7 @@ def run_inference(args):
         save_prediction_examples(
             model=model,
             dataset=inference_dataset,
-            output_folder=output_dir,  # Use constructed path
+            output_folder=output_dir,
             num_examples=args.num_examples_to_save,
             threshold=args.threshold
         )
